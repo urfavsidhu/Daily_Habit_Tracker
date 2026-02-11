@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>DailyHabits</title>
+  <style>
+    :root {
+      --border: #eaeaea;
+      --text: #111;
+      --muted: #666;
+      --accent: #7c3aed;
+      --bg: #fff;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text)
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    header b {
+      font-size: 20px
+    }
+
+    button {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer
+    }
+
+    .container {
+      padding: 24px
+    }
+
+    .calendar-head {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border);
+      text-align: center;
+      padding: 6px;
+      font-size: 14px
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 500
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+      padding-left: 12px
+    }
+
+    td.check {
+      cursor: pointer
+    }
+
+    td.check.active {
+      background: #fef3c7
+    }
+
+    tfoot td {
+      font-weight: 600
+    }
+
+    .actions {
+      margin-top: 12px
+    }
+
+    .note {
+      margin-top: 40px;
+      text-align: center;
+      color: var(--muted)
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <b>DailyHabits</b>
+    <button>Sidharth Sharma</button>
+  </header>
+
+  <div class="container">
+
+    <div class="calendar-head">
+      <button onclick="changeMonth(-1)">‹</button>
+      <b id="monthYear"></b>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+
+    <table id="habitTable">
+      <thead>
+        <tr id="dayRow">
+          <th>Habits</th>
+        </tr>
+      </thead>
+      <tbody id="habitsBody"></tbody>
+    </table>
+
+    <div class="actions">
+      <button onclick="addHabit()">+ New Habit</button>
+    </div>
+
+    <div class="note">
+      <p><b>Sidharth Sharma</b></p>
+      <p>Created by Sidharth Sharma only for my use. </p>
+    </div>
+
+  </div>
+
+  <script>
+    let date = new Date();
+    let habits = [];
+
+    // 🔹 BACKEND URL
+    const API_URL = "http://localhost:5000/api/habits";
+
+    function daysInMonth(y, m) {
+      return new Date(y, m + 1, 0).getDate();
+    }
+
+    // 🔹 LOAD DATA FROM BACKEND
+    async function loadHabits() {
+  try {
+    const res = await fetch(API_URL);
+    habits = await res.json();
+
+    if (!habits || !habits.length) {
+      habits = [
+        { name: "Morning Exercise", data: {} },
+        { name: "Study", data: {} },
+        { name: "3 liters water", data: {} }
+      ];
+      await saveHabits();
+    }
+
+  } catch (e) {
+    console.error("Backend not reachable, loading default habits", e);
+
+    // agar backend band hai to bhi default data show ho
+    habits = [
+      { name: "Morning Exercise", data: {} },
+      { name: "Study", data: {} },
+      { name: "3 liters water", data: {} }
+    ];
+  }
+
+  render(); // 🔥 har condition me render hoga
+}
+
+
+    // 🔹 SAVE DATA TO BACKEND
+    async function saveHabits() {
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(habits)
+      });
+    }
+
+    function render() {
+      const y = date.getFullYear(), m = date.getMonth();
+      const days = daysInMonth(y, m);
+
+      document.getElementById("monthYear").innerText =
+        date.toLocaleString("default", { month: "long", year: "numeric" });
+
+      const dayRow = document.getElementById("dayRow");
+      dayRow.innerHTML = "<th>Habits</th>";
+      for (let d = 1; d <= days; d++) dayRow.innerHTML += `<th>${d}</th>`;
+      dayRow.innerHTML += "<th>Goal</th><th>Achieved</th>";
+
+      const body = document.getElementById("habitsBody");
+      body.innerHTML = "";
+
+      habits.forEach((h, hi) => {
+        let achieved = 0;
+        let tr = `<tr><td>${h.name}</td>`;
+
+        for (let d = 1; d <= days; d++) {
+          const key = `${y}-${m}-${d}`;
+          const active = h.data[key];
+          if (active) achieved++;
+
+          tr += `<td class="check ${active ? "active" : ""}"
+              onclick="toggle(${hi},${d})">${active ? "✓" : ""}</td>`;
+        }
+
+        tr += `<td>${days}</td><td>${achieved}</td></tr>`;
+        body.innerHTML += tr;
+      });
+    }
+
+    // 🔹 TOGGLE HABIT
+    function toggle(h, d) {
+      const key = `${date.getFullYear()}-${date.getMonth()}-${d}`;
+      habits[h].data[key] = !habits[h].data[key];
+      saveHabits();
+      render();
+    }
+
+    // 🔹 ADD NEW HABIT
+    function addHabit() {
+      const name = prompt("Habit name?");
+      if (name) {
+        habits.push({ name, data: {} });
+        saveHabits();
+        render();
+      }
+    }
+
+    // 🔹 CHANGE MONTH
+    function changeMonth(n) {
+      date.setMonth(date.getMonth() + n);
+      render();
+    }
+
+    // 🔹 INITIAL LOAD
+    loadHabits();
+  </script>
+
+</body>
+
+</html>

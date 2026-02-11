@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Morning Exercise",
+    "data": {
+      "2026-1-19": false,
+      "2026-1-22": false,
+      "2026-1-24": false
+    }
+  },
+  {
+    "name": "Study",
+    "data": {
+      "2026-1-4": false,
+      "2026-1-8": false,
+      "2026-1-11": false,
+      "2026-1-12": false,
+      "2026-1-16": false,
+      "2026-1-17": false,
+      "2026-1-19": false
+    }
+  },
+  {
+    "name": "3 liters water",
+    "data": {
+      "2026-1-19": false,
+      "2026-1-23": false
+    }
+  }
+]
